@@ -1,0 +1,37 @@
+name: Daily GitHub Recap
+
+on:
+  schedule:
+    # Every weekday at 8:00 AM UTC — adjust to your timezone
+    # Use https://crontab.guru to customize
+    - cron: "0 8 * * 1-5"
+  workflow_dispatch: # Allow manual trigger from the Actions tab
+
+jobs:
+  recap:
+    name: Send Slack Recap
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run recap
+        run: npm start
+        env:
+          # Create a PAT at https://github.com/settings/tokens with repo + read:user scope
+          # Add it as a repository secret named RECAP_GITHUB_TOKEN
+          GITHUB_TOKEN: ${{ secrets.RECAP_GITHUB_TOKEN }}
+          # Add your Slack webhook URL as a secret named SLACK_WEBHOOK_URL
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # Add your GitHub username as a secret named RECAP_GITHUB_USERNAME
+          GITHUB_USERNAME: ${{ secrets.RECAP_GITHUB_USERNAME }}
