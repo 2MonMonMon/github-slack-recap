@@ -85,10 +85,17 @@ export function buildSlackBlocks(data: GitHubData): SlackBlock[] {
   // Show only PRs that need attention:
   //   - has unresolved review threads, OR
   //   - has < 2 approvals AND at least one reviewer is overdue (asked 24h+ ago, no response)
+  const cutoff = new Date(Date.now() - 24 * 3_600_000).toISOString();
   const prsNeedingAttention = data.myOpenPRs.filter(
     (pr) =>
-      pr.unresolvedThreadCount > 0 ||
-      (pr.approvalCount < 2 && pr.overdueReviewers.length > 0)
+      !(pr.approvalCount >= 2 && pr.baseBranch === "develop") &&
+      (
+        pr.ciStatus === "failure" ||
+        pr.ciStatus === "pending" ||
+        pr.unresolvedThreadCount > 0 ||
+        (pr.approvalCount < 2 && pr.overdueReviewers.length > 0) ||
+        (pr.updatedAt < cutoff && pr.recentComments.length === 0 && pr.recentReviews.length === 0)
+      )
   );
   blocks.push(divider());
   if (prsNeedingAttention.length === 0) {
